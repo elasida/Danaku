@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Money Management — Summary + Lembur (Final)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#071226;
+  --card:#0b1a2b;
+  --muted:#9aa4b2;
+  --accent:#6ee7b7;
+  --accent-2:#60a5fa;
+  --radius:12px;
+  --shadow: 0 12px 36px rgba(2,6,23,0.65);
+  --glass-blur: 12px;
+  --touch:48px;
+  --max-width:420px;
+  --field-per-day:500000;
+  --outline-strong: rgba(255,255,255,0.10);
+  --color-work: rgba(96,165,250,0.18);
+  --color-tn: rgba(249,115,22,0.14);
+  --color-tw: rgba(139,92,246,0.14);
+  --color-field: rgba(34,197,94,0.14);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#071028,#071226);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8;-webkit-font-smoothing:antialiased}
+.app{max-width:var(--max-width);margin:0 auto;padding:18px;padding-bottom: calc(18px + env(safe-area-inset-bottom) + 140px);min-height:100vh}
+
+/* Card */
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border:1px solid var(--outline-strong);backdrop-filter: blur(var(--glass-blur));margin-bottom:12px}
+
+/* Inputs */
+input, select, textarea, button{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+input, select, textarea{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#e6eef8;font-size:14px;outline:none}
+input:focus, select:focus, textarea:focus{box-shadow:0 8px 24px rgba(96,165,250,0.08);border-color:rgba(96,165,250,0.18)}
+
+/* Period */
+.period-row{display:flex;gap:12px;margin-bottom:12px}
+.period-card{flex:1;border-radius:12px;padding:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--outline-strong);display:flex;align-items:center;justify-content:center}
+.select{width:100%;background:#fff;color:#000;border-radius:10px;padding:10px;font-size:14px}
+
+/* Top tiles */
+.top-row{display:flex;gap:12px;margin-bottom:12px}
+.tile{flex:1;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;position:relative;overflow:hidden}
+.tile .label{font-size:13px;color:var(--muted)}
+.tile .value{font-weight:800;font-size:18px;color:#fff}
+
+/* Balance & alloc */
+.balance-card{margin-top:10px;padding:12px;border-radius:12px;text-align:center;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--outline-strong)}
+.alloc-row{display:flex;gap:12px;margin-top:12px}
+.alloc-tile{flex:1;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--outline-strong);min-height:84px}
+
+/* Buttons */
+.btn{min-height:var(--touch);padding:0 14px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent-2),var(--accent));color:#04263b;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:10px}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.btn.danger{background:linear-gradient(90deg,#ff7b7b,#ff4d6d);color:#fff}
+.small-btn{height:36px;padding:6px 10px;border-radius:10px;font-size:13px}
+
+/* Table */
+.table-wrap{margin-top:12px;max-height:360px;overflow:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005))}
+thead th{position:sticky;top:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.6));padding:12px 10px;font-size:12px;color:var(--muted);text-align:left}
+tbody td{padding:12px 10px;border-bottom:1px dashed rgba(255,255,255,0.03);font-size:14px;color:#dbeafe}
+
+/* Calendar */
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px}
+.cal-day{min-height:64px;padding:8px;border-radius:8px;text-align:left;background:rgba(255,255,255,0.02);cursor:pointer;color:#e6eef8;border:1px solid rgba(255,255,255,0.03);position:relative;overflow:hidden}
+.cal-day.header{background:transparent;color:var(--muted);cursor:default;border:none;padding:6px;font-weight:700;text-align:center}
+.cal-day .date-num{font-weight:700;margin-bottom:6px}
+.cal-day .badges{display:flex;flex-direction:column;gap:4px;font-size:11px}
+.badge{display:inline-block;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.04);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.badge.work{background:var(--color-work);color:#04263b}
+.badge.tn{background:var(--color-tn);color:#3b1700}
+.badge.tw{background:var(--color-tw);color:#2b003b}
+.badge.field{background:var(--color-field);color:#042613}
+
+/* range highlight */
+.cal-day.range-work{background:linear-gradient(90deg,var(--color-work), rgba(255,255,255,0.02));border-color:rgba(96,165,250,0.18)}
+.cal-day.range-tn{background:linear-gradient(90deg,var(--color-tn), rgba(255,255,255,0.02));border-color:rgba(249,115,22,0.18)}
+.cal-day.range-tw{background:linear-gradient(90deg,var(--color-tw), rgba(255,255,255,0.02));border-color:rgba(139,92,246,0.18)}
+.cal-day.range-field{background:linear-gradient(90deg,var(--color-field), rgba(255,255,255,0.02));border-color:rgba(34,197,94,0.18)}
+
+/* selected */
+.cal-day.selected{box-shadow:0 8px 28px rgba(96,165,250,0.12);transform:translateY(-4px);border-color:rgba(96,165,250,0.18)}
+
+/* modal */
+.modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal{width:92%;max-width:520px;background:var(--card);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow)}
+.modal h4{margin:0 0 8px 0}
+.modal .row{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+.modal .muted{color:var(--muted)}
+
+/* helper */
+.muted{color:var(--muted);font-size:13px}
+.small{font-size:13px}
+
+/* bottom nav */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;height:78px;display:flex;align-items:center;justify-content:center;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-top:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(8px)}
+.nav-inner{max-width:var(--max-width);display:flex;gap:8px;width:100%;padding:0 12px}
+.nav-btn{flex:1;padding:12px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-weight:700;cursor:pointer}
+.nav-btn.active{background:linear-gradient(90deg, rgba(96,165,250,0.08), rgba(110,231,183,0.06));color:#fff}
+
+/* responsive */
+@media (max-width:420px){ .alloc-row{flex-direction:column} .calendar{grid-template-columns:repeat(7,1fr)} }
+</style>
+</head>
+<body>
+<div class="app" role="application" aria-label="Money Management Periode">
+
+  <!-- Period selectors -->
+  <div class="period-row">
+    <div class="period-card"><select id="monthSelect" class="select" aria-label="Pilih bulan"></select></div>
+    <div class="period-card"><select id="yearSelect" class="select" aria-label="Pilih tahun"></select></div>
+  </div>
+
+  <!-- Summary Tab -->
+  <div id="summaryTab">
+    <div class="top-row">
+      <div class="card tile income" id="tileIncome">
+        <div><div class="label">Pendapatan</div><div class="value">Rp <span id="totalIncome">0</span></div></div>
+      </div>
+      <div class="card tile expense" id="tileExpense">
+        <div><div class="label">Pengeluaran</div><div class="value">Rp <span id="totalExpense">0</span></div></div>
+      </div>
+    </div>
+
+    <div class="card balance-card"><div class="label">Saldo Akhir</div><div class="value">Rp <span id="finalBalance">0</span></div></div>
+
+    <div class="alloc-row">
+      <div class="alloc-tile card"><div class="alloc-label">Investasi</div><div class="alloc-value">Rp <span id="allocInvest">0</span></div></div>
+      <div class="alloc-tile card"><div class="alloc-label">Tabungan Pendidikan</div><div class="alloc-value">Rp <span id="allocEdu">0</span></div></div>
+    </div>
+    <div class="alloc-row" style="margin-top:10px">
+      <div class="alloc-tile card"><div class="alloc-label">Emergency Fund</div><div class="alloc-value">Rp <span id="allocEmg">0</span></div></div>
+      <div class="alloc-tile card"><div class="alloc-label">Self Reward</div><div class="alloc-value">Rp <span id="allocSelf">0</span></div></div>
+    </div>
+
+    <div class="card section" aria-labelledby="incomeTitle">
+      <h3 id="incomeTitle">Income</h3>
+      <div style="margin-top:10px">
+        <table>
+          <tbody>
+            <tr><td class="muted small">Gaji Pokok</td><td style="width:160px"><input id="gajiPokok" type="number" value="0" /></td></tr>
+            <tr><td class="muted small">Tunjangan Transport</td><td><input id="transport" type="number" value="0" /></td></tr>
+            <tr><td class="muted small">Bonus</td><td><input id="bonus" type="number" value="0" /></td></tr>
+            <tr><td class="muted small">Field Allowance</td><td><span id="fieldAllowance">0</span></td></tr>
+            <tr><td class="muted small">Lembur (otomatis)</td><td><span id="lembur">0</span></td></tr>
+            <tr><td class="muted small">Travel Normal (TN)</td><td><span id="travelNormal">0</span></td></tr>
+            <tr><td class="muted small">Travel Weekend (TW)</td><td><span id="travelWeekend">0</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card section" aria-labelledby="expenseTitle">
+      <h3 id="expenseTitle">Pengeluaran</h3>
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+        <input id="expenseDesc" type="text" placeholder="Contoh: Rumah Tangga" />
+        <input id="expenseAmount" type="number" placeholder="Rp" style="width:120px" />
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn" id="addExpenseBtn">Tambah Pengeluaran</button>
+        <button class="btn ghost" id="saveBtn">Simpan</button>
+        <button class="btn danger" id="clearBtn">Hapus Semua</button>
+      </div>
+      <div class="table-wrap" id="expenseWrap" style="margin-top:12px">
+        <table id="expenseTable" aria-live="polite">
+          <thead><tr><th style="width:60%">Deskripsi</th><th style="width:25%">Jumlah</th><th style="width:15%">Aksi</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- end summaryTab -->
+
+  <!-- Lembur Tab -->
+  <div id="lemburTab" style="display:none;">
+    <div class="card">
+      <h3>Kalkulator Lembur (Range)</h3>
+
+      <div id="lemburEntryCard" style="margin-top:12px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:140px"><label>Tanggal Mulai</label><input id="l_rangeStart" type="date" /></div>
+            <div style="flex:1;min-width:140px"><label>Tanggal Selesai</label><input id="l_rangeEnd" type="date" /></div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+            <div style="width:140px"><label>Total Jam (per hari atau total)</label><input id="l_rangeHours" type="number" min="0" step="0.25" /></div>
+            <div style="flex:1"><label>Jenis</label><select id="l_rangeType" class="l-visible"><option value="work">Hari Kerja (Lembur)</option><option value="tn">Travel Normal (TN)</option><option value="tw">Travel Weekend (TW)</option></select></div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="flex:2"><label>Deskripsi</label><input id="l_rangeDesc" type="text" placeholder="Contoh: Instalasi, Meeting lapangan" /></div>
+            <div style="width:180px;display:flex;flex-direction:column;justify-content:flex-end"><div class="muted small">Masukkan jam per hari (≤24) atau total jam rentang (>24)</div></div>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button class="btn" id="l_addRangeEntryBtn">Tambah Entri Rentang</button>
+            <button class="btn ghost" id="l_clearRangeEntriesBtn">Hapus Semua Entri</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <select id="l_calMonth" style="padding:8px;border-radius:8px;background:#fff;color:#000"></select>
+          <select id="l_calYear" style="padding:8px;border-radius:8px;background:#fff;color:#000"></select>
+          <button class="btn ghost" id="l_prevMonth">Prev</button>
+          <button class="btn ghost" id="l_nextMonth">Next</button>
+        </div>
+
+        <div class="calendar card" id="l_calendarGrid" style="padding:12px;border-radius:12px"></div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <h4>Daftar Entri Rentang</h4>
+          <div class="list card" id="l_rangeEntriesList" style="padding:8px;max-height:320px;overflow:auto"></div>
+        </div>
+
+        <div style="width:360px;min-width:260px">
+          <h4>Ringkasan Perhitungan</h4>
+          <div class="summary-line" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.03)"><div class="muted">Total Lembur (Rp)</div><div id="l_sumOvertime">Rp 0</div></div>
+          <div class="summary-line" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.03)"><div class="muted">Total TN (Rp)</div><div id="l_sumTN">Rp 0</div></div>
+          <div class="summary-line" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.03)"><div class="muted">Total TW (Rp)</div><div id="l_sumTW">Rp 0</div></div>
+          <div class="summary-line" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.03)"><div class="muted">Total Field (Rp)</div><div id="l_sumField">Rp 0</div></div>
+
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn" id="l_applyRangeToSummaryBtn">Apply to Summary</button>
+            <button class="btn ghost" id="l_exportRangeCsvBtn">Export CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- end lemburTab -->
+
+</div>
+
+<!-- modal root -->
+<div id="modalRoot" style="display:none"></div>
+
+<!-- bottom nav -->
+<div class="bottom-nav" role="navigation" aria-label="Navigasi">
+  <div class="nav-inner">
+    <button id="btn-summary" class="nav-btn active">Summary</button>
+    <button id="btn-lembur" class="nav-btn">Lembur</button>
+  </div>
+</div>
+
+<script>
+/* STORAGE & STATE */
+const STORAGE_KEY = 'moneylab_period_v2_blackselect';
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const FIELD_PER_DAY = 500000;
+
+let state = { periods: {}, selectedMonth: null, selectedYear: null };
+
+function storageLoad(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) state = JSON.parse(raw); }catch(e){ console.warn(e) } }
+function storageSave(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ console.warn(e) } }
+function periodKey(year, monthIndex){ return `${year}-${monthIndex}`; }
+function ensurePeriod(year, monthIndex){
+  const key = periodKey(year, monthIndex);
+  if(!state.periods[key]){
+    state.periods[key] = {
+      income: { gaji:0, transport:0, bonus:0, fieldAllowance:0, lembur:0, travelNormal:0, travelWeekend:0 },
+      expenses: [],
+      overtimeEntries: [],
+      holidays: {}
+    };
+  }
+  return state.periods[key];
+}
+function fmt(n){ return (n||0).toLocaleString(); }
+
+/* DOM refs */
+const refs = {
+  monthSelect: document.getElementById('monthSelect'),
+  yearSelect: document.getElementById('yearSelect'),
+  totalIncome: document.getElementById('totalIncome'),
+  totalExpense: document.getElementById('totalExpense'),
+  finalBalance: document.getElementById('finalBalance'),
+  gaji: document.getElementById('gajiPokok'),
+  transport: document.getElementById('transport'),
+  bonus: document.getElementById('bonus'),
+  fieldAllowance: document.getElementById('fieldAllowance'),
+  lembur: document.getElementById('lembur'),
+  travelNormal: document.getElementById('travelNormal'),
+  travelWeekend: document.getElementById('travelWeekend'),
+  expenseDesc: document.getElementById('expenseDesc'),
+  expenseAmount: document.getElementById('expenseAmount'),
+  expenseTableBody: document.querySelector('#expenseTable tbody'),
+  expenseWrap: document.getElementById('expenseWrap'),
+  allocInvest: document.getElementById('allocInvest'),
+  allocEdu: document.getElementById('allocEdu'),
+  allocEmg: document.getElementById('allocEmg'),
+  allocSelf: document.getElementById('allocSelf'),
+  addExpenseBtn: document.getElementById('addExpenseBtn'),
+  clearBtn: document.getElementById('clearBtn'),
+  saveBtn: document.getElementById('saveBtn')
+};
+
+/* UI helpers */
+function animateNumber(elSpan, newVal){
+  const start = parseInt(elSpan.dataset.value || '0', 10) || 0;
+  const end = Math.round(newVal);
+  elSpan.dataset.value = end;
+  const duration = 350;
+  const startTime = performance.now();
+  function tick(now){
+    const t = Math.min(1, (now - startTime)/duration);
+    const eased = t<.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+    const cur = Math.round(start + (end - start) * eased);
+    elSpan.textContent = fmt(cur);
+    if(t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function calcIncomeTotal(period){
+  const s = period.income;
+  return (Number(s.gaji)||0) + (Number(s.transport)||0) + (Number(s.bonus)||0) + (Number(s.fieldAllowance)||0) + (Number(s.lembur)||0) + (Number(s.travelNormal)||0) + (Number(s.travelWeekend)||0);
+}
+function calcExpenseTotal(period){ return (period.expenses || []).reduce((a,b)=>a + (Number(b.amount)||0), 0); }
+
+function distributeAllocation(balance){
+  const b = Math.max(0, Math.round(balance));
+  const invest = Math.round(b * 0.20);
+  const edu = Math.round(b * 0.10);
+  const emg = Math.round(b * 0.10);
+  const allocatedSoFar = invest + edu + emg;
+  const self = b - allocatedSoFar;
+  refs.allocInvest.textContent = fmt(invest);
+  refs.allocEdu.textContent = fmt(edu);
+  refs.allocEmg.textContent = fmt(emg);
+  refs.allocSelf.textContent = fmt(self);
+}
+
+function renderExpenses(period){
+  refs.expenseTableBody.innerHTML = '';
+  (period.expenses || []).forEach((it, idx) => {
+    const tr = document.createElement('tr');
+    const tdDesc = document.createElement('td'); tdDesc.textContent = it.desc;
+    const tdAmt = document.createElement('td'); tdAmt.textContent = 'Rp ' + fmt(it.amount);
+    const tdAct = document.createElement('td'); tdAct.className = 'row-actions';
+    const btn = document.createElement('button'); btn.className = 'del'; btn.textContent = 'Hapus';
+    btn.onclick = ()=>{ period.expenses.splice(idx,1); updateUIForSelectedPeriod(); };
+    tdAct.appendChild(btn);
+    tr.appendChild(tdDesc); tr.appendChild(tdAmt); tr.appendChild(tdAct);
+    refs.expenseTableBody.appendChild(tr);
+  });
+  setTimeout(()=>{ refs.expenseWrap.scrollTop = refs.expenseWrap.scrollHeight; }, 120);
+}
+
+function updateUIForSelectedPeriod(){
+  const y = Number(state.selectedYear);
+  const m = Number(state.selectedMonth);
+  const period = ensurePeriod(y, m);
+  const incomeTotal = calcIncomeTotal(period);
+  const expenseTotal = calcExpenseTotal(period);
+  const balance = incomeTotal - expenseTotal;
+  animateNumber(refs.totalIncome, incomeTotal);
+  animateNumber(refs.totalExpense, expenseTotal);
+  animateNumber(refs.finalBalance, balance);
+  distributeAllocation(balance);
+  refs.gaji.value = period.income.gaji || 0;
+  refs.transport.value = period.income.transport || 0;
+  refs.bonus.value = period.income.bonus || 0;
+  refs.fieldAllowance.textContent = fmt(period.income.fieldAllowance);
+  refs.lembur.textContent = fmt(period.income.lembur);
+  refs.travelNormal.textContent = fmt(period.income.travelNormal);
+  refs.travelWeekend.textContent = fmt(period.income.travelWeekend);
+  renderExpenses(period);
+  if(window.renderCalendarForCurrentPeriod) window.renderCalendarForCurrentPeriod();
+  storageSave();
+}
+
+/* Month/Year selectors */
+function populateMonthYearSelectors(){
+  refs.monthSelect.innerHTML = '';
+  MONTHS.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = m; refs.monthSelect.appendChild(opt); });
+  refs.yearSelect.innerHTML = '';
+  for(let y=2026; y<=2050; y++){ const opt = document.createElement('option'); opt.value = y; opt.textContent = y; refs.yearSelect.appendChild(opt); }
+  const now = new Date();
+  const defaultMonth = (state.selectedMonth !== null && state.selectedMonth !== undefined) ? state.selectedMonth : now.getMonth();
+  const defaultYear = (state.selectedYear !== null && state.selectedYear !== undefined) ? state.selectedYear : now.getFullYear();
+  const yearToSet = Math.min(Math.max(defaultYear, 2026), 2050);
+  refs.monthSelect.value = defaultMonth;
+  refs.yearSelect.value = yearToSet;
+  state.selectedMonth = Number(refs.monthSelect.value);
+  state.selectedYear = Number(refs.yearSelect.value);
+}
+
+/* Bind summary events */
+function bindEvents(){
+  refs.monthSelect.addEventListener('change', (e)=>{ state.selectedMonth = Number(e.target.value); ensurePeriod(state.selectedYear, state.selectedMonth); updateUIForSelectedPeriod(); });
+  refs.yearSelect.addEventListener('change', (e)=>{ state.selectedYear = Number(e.target.value); ensurePeriod(state.selectedYear, state.selectedMonth); updateUIForSelectedPeriod(); });
+
+  refs.gaji.addEventListener('input', ()=>{ const p = ensurePeriod(state.selectedYear, state.selectedMonth); p.income.gaji = Number(refs.gaji.value) || 0; updateUIForSelectedPeriod(); });
+  refs.transport.addEventListener('input', ()=>{ const p = ensurePeriod(state.selectedYear, state.selectedMonth); p.income.transport = Number(refs.transport.value) || 0; updateUIForSelectedPeriod(); });
+  refs.bonus.addEventListener('input', ()=>{ const p = ensurePeriod(state.selectedYear, state.selectedMonth); p.income.bonus = Number(refs.bonus.value) || 0; updateUIForSelectedPeriod(); });
+
+  refs.addExpenseBtn.addEventListener('click', ()=>{ const desc = refs.expenseDesc.value.trim(); const amount = Number(refs.expenseAmount.value); if(!desc || !amount || amount <= 0){ alert('Isi deskripsi dan jumlah (lebih dari 0).'); return; } const p = ensurePeriod(state.selectedYear, state.selectedMonth); p.expenses.push({ desc, amount }); refs.expenseDesc.value=''; refs.expenseAmount.value=''; updateUIForSelectedPeriod(); });
+
+  refs.clearBtn.addEventListener('click', ()=>{ if(!confirm('Hapus semua pengeluaran untuk periode ini?')) return; const p = ensurePeriod(state.selectedYear, state.selectedMonth); p.expenses = []; updateUIForSelectedPeriod(); });
+
+  refs.saveBtn.addEventListener('click', ()=>{ storageSave(); const t = document.createElement('div'); t.textContent = 'Tersimpan'; t.style.position='fixed'; t.style.right='18px'; t.style.bottom='140px'; t.style.background='rgba(255,255,255,0.06)'; t.style.padding='8px 12px'; t.style.borderRadius='8px'; document.body.appendChild(t); setTimeout(()=>t.remove(),900); });
+}
+
+/* Compatibility */
+window.setAutoIncomeForPeriod = function(fieldAllowance, lembur, travelNormal, travelWeekend, year = null, month = null){
+  const y = (year !== null && year !== undefined) ? Number(year) : Number(state.selectedYear);
+  const m = (month !== null && month !== undefined) ? Number(month) : Number(state.selectedMonth);
+  const p = ensurePeriod(y, m);
+  p.income.fieldAllowance = Number(fieldAllowance) || 0;
+  p.income.lembur = Number(lembur) || 0;
+  p.income.travelNormal = Number(travelNormal) || 0;
+  p.income.travelWeekend = Number(travelWeekend) || 0;
+  if(y === Number(state.selectedYear) && m === Number(state.selectedMonth)) updateUIForSelectedPeriod();
+  storageSave();
+};
+
+/* LEMBUR TAB (kalender + modal + holiday treated as weekend) */
+(function initLemburTab(){
+  const l = {
+    month: document.getElementById('l_calMonth'),
+    year: document.getElementById('l_calYear'),
+    grid: document.getElementById('l_calendarGrid'),
+    prev: document.getElementById('l_prevMonth'),
+    next: document.getElementById('l_nextMonth'),
+    start: document.getElementById('l_rangeStart'),
+    end: document.getElementById('l_rangeEnd'),
+    hours: document.getElementById('l_rangeHours'),
+    type: document.getElementById('l_rangeType'),
+    desc: document.getElementById('l_rangeDesc'),
+    addBtn: document.getElementById('l_addRangeEntryBtn'),
+    clearBtn: document.getElementById('l_clearRangeEntriesBtn'),
+    entriesList: document.getElementById('l_rangeEntriesList'),
+    sumOvertime: document.getElementById('l_sumOvertime'),
+    sumTN: document.getElementById('l_sumTN'),
+    sumTW: document.getElementById('l_sumTW'),
+    sumField: document.getElementById('l_sumField'),
+    applyBtn: document.getElementById('l_applyRangeToSummaryBtn'),
+    exportBtn: document.getElementById('l_exportRangeCsvBtn')
+  };
+
+  function parseDate(s){ const p = s.split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])); }
+  function daysBetweenInclusive(s,e){ const a = parseDate(s), b = parseDate(e); if(isNaN(a)||isNaN(b)||b<a) return 0; return Math.floor((b - a)/(24*3600*1000)) + 1; }
+
+  function populateSelectors(){
+    l.month.innerHTML = ''; MONTHS.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=m; l.month.appendChild(o); });
+    l.year.innerHTML = ''; for(let y=2026;y<=2050;y++){ const o=document.createElement('option'); o.value=y; o.textContent=y; l.year.appendChild(o); }
+    if(typeof state.selectedMonth !== 'undefined' && state.selectedMonth !== null){ l.month.value = state.selectedMonth; l.year.value = state.selectedYear; }
+    else { const now = new Date(); l.month.value = now.getMonth(); l.year.value = Math.max(2026, now.getFullYear()); }
+  }
+
+  // unique key for entry
+  function entryKey(e){ return `${e.start}|${e.end}|${e.type}|${e.hours}|${(e.desc||'').trim()}`; }
+
+  // prevent duplicate identical entries
+  function addEntryIfNotDuplicate(period, entry){
+    const key = entryKey(entry);
+    const exists = (period.overtimeEntries || []).some(en => entryKey(en) === key);
+    if(exists) return false;
+    period.overtimeEntries.push(entry);
+    return true;
+  }
+
+  // compute per-entry using government multipliers
+  function computeEntryNominal(entry, hourlyRate, period){
+    let hoursPerDay = 0;
+    if((entry.hours || 0) <= 24){
+      hoursPerDay = Number(entry.hours || 0);
+    } else {
+      hoursPerDay = (Number(entry.hours || 0) / (entry.days || 1));
+    }
+    let totalOvertimeNominal = 0;
+    for(let i=0;i<(entry.days||1);i++){
+      const d = new Date(parseDate(entry.start));
+      d.setDate(d.getDate() + i);
+      const day = d.getDay();
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      // treat as weekend if actual weekend OR if date is marked holiday in period.holidays
+      const isWeekend = (day === 0 || day === 6) || (period.holidays && period.holidays[dateStr]);
+      if(isWeekend || entry.type === 'tw'){
+        for(let h=1; h<=hoursPerDay; h++){
+          if(h <= 8) totalOvertimeNominal += hourlyRate * 2;
+          else if(h === 9) totalOvertimeNominal += hourlyRate * 3;
+          else totalOvertimeNominal += hourlyRate * 4;
+        }
+      } else {
+        const overtime = Math.max(0, hoursPerDay - 8);
+        for(let oh=1; oh<=overtime; oh++){
+          if(oh === 1) totalOvertimeNominal += hourlyRate * 1.5;
+          else totalOvertimeNominal += hourlyRate * 2;
+        }
+      }
+    }
+    const fieldNominal = FIELD_PER_DAY * (entry.days || 1);
+    entry._hoursPerDay = hoursPerDay;
+    entry._nominal = Math.round(totalOvertimeNominal);
+    entry._fieldNominal = fieldNominal;
+    entry._totalNominal = entry._nominal + entry._fieldNominal;
+    return { nominalOvertimeTotal: entry._nominal, fieldNominal: entry._fieldNominal, total: entry._totalNominal };
+  }
+
+  function computeAndShow(period){
+    const arr = period.overtimeEntries || [];
+    const hourly = Math.round((Number(period.income.gaji)||0) / 173) || 0;
+    let totalOvertime=0, totalTN=0, totalTW=0, totalField=0;
+    arr.forEach(e=>{
+      const res = computeEntryNominal(e, hourly, period);
+      if(e.type === 'tn') totalTN += res.nominalOvertimeTotal;
+      else if(e.type === 'tw') totalTW += res.nominalOvertimeTotal;
+      else totalOvertime += res.nominalOvertimeTotal;
+      totalField += res.fieldNominal;
+    });
+    l.sumOvertime.textContent = 'Rp ' + totalOvertime.toLocaleString();
+    l.sumTN.textContent = 'Rp ' + totalTN.toLocaleString();
+    l.sumTW.textContent = 'Rp ' + totalTW.toLocaleString();
+    l.sumField.textContent = 'Rp ' + totalField.toLocaleString();
+    return { totalOvertime, totalTN, totalTW, totalField, hourly };
+  }
+
+  function renderEntriesList(period){
+    l.entriesList.innerHTML = '';
+    const arr = period.overtimeEntries || [];
+    if(arr.length === 0){ l.entriesList.innerHTML = '<div class="muted small">Belum ada entri rentang untuk periode ini.</div>'; return; }
+    arr.forEach((it, idx)=>{
+      const div = document.createElement('div');
+      div.style.padding='8px';
+      div.style.borderBottom='1px dashed rgba(255,255,255,0.03)';
+      const typeLabel = it.type.toUpperCase();
+      const title = `${it.start} → ${it.end} • ${typeLabel} • ${it._hoursPerDay || it.hours || 0} jam/hari • ${it.days} hari`;
+      const nominalText = `Lembur: Rp ${((it._nominal||0)).toLocaleString()} • Field: Rp ${((it._fieldNominal||0)).toLocaleString()} • Total: Rp ${((it._totalNominal||0)).toLocaleString()}`;
+      div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="max-width:70%"><strong>${title}</strong><div class="small muted" style="margin-top:6px">${it.desc || ''}</div></div>
+        <div style="text-align:right">
+          <div class="small muted" style="margin-bottom:6px">${nominalText}</div>
+          <button class="btn ghost" data-idx="${idx}">Hapus</button>
+        </div>
+      </div>`;
+      l.entriesList.appendChild(div);
+    });
+    l.entriesList.querySelectorAll('button[data-idx]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const idx = Number(b.dataset.idx);
+        const p = ensurePeriod(state.selectedYear, state.selectedMonth);
+        p.overtimeEntries.splice(idx,1);
+        storageSave();
+        renderEntriesList(p);
+        renderEntriesOnCalendar(p);
+        computeAndShow(p);
+      });
+    });
+  }
+
+  function renderEntriesOnCalendar(period){
+    const cells = l.grid.querySelectorAll('.cal-day');
+    cells.forEach(c=>{
+      c.classList.remove('range-work','range-tn','range-tw','range-field','selected');
+      const badges = c.querySelector('.badges');
+      if(badges) badges.innerHTML = '';
+    });
+    (period.overtimeEntries || []).forEach((e, idx)=>{
+      const start = parseDate(e.start);
+      const end = parseDate(e.end);
+      for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const cell = l.grid.querySelector(`.cal-day[data-date="${dateStr}"]`);
+        if(!cell) continue;
+        let cls = 'range-work';
+        if(e.type === 'tn') cls = 'range-tn';
+        else if(e.type === 'tw') cls = 'range-tw';
+        cell.classList.add(cls);
+        cell.classList.add('range-field');
+        const badges = cell.querySelector('.badges');
+        const shortDesc = (e.desc || '').length > 18 ? (e.desc || '').slice(0,16) + '…' : (e.desc || '');
+        const badge = document.createElement('div');
+        badge.className = 'badge ' + (e.type === 'tn' ? 'tn' : e.type === 'tw' ? 'tw' : 'work');
+        badge.title = `${e.desc || ''} • ${e._hoursPerDay || e.hours || 0} jam/hari • ${e.days} hari`;
+        badge.textContent = `${e._hoursPerDay || e.hours || 0}j ${shortDesc ? '• ' + shortDesc : ''}`;
+        badges.appendChild(badge);
+      }
+    });
+    renderEntriesList(period);
+    computeAndShow(period);
+  }
+
+  // modal: show entries for date, dedupe, and allow marking holiday
+  function showDateModal(dateStr){
+    const modalRoot = document.getElementById('modalRoot');
+    modalRoot.innerHTML = '';
+    const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop';
+    const modal = document.createElement('div'); modal.className = 'modal';
+    const h = document.createElement('h4'); h.textContent = `Detail tanggal ${dateStr}`;
+    modal.appendChild(h);
+    const p = document.createElement('div'); p.className='muted small'; p.textContent = 'Entri yang memengaruhi tanggal ini:';
+    modal.appendChild(p);
+    const list = document.createElement('div'); list.style.marginTop='10px';
+    const period = ensurePeriod(Number(state.selectedYear), Number(state.selectedMonth));
+    // collect entries that include dateStr
+    const rawEntries = (period.overtimeEntries || []).filter(e=>{
+      const s = parseDate(e.start), en = parseDate(e.end);
+      const d = parseDate(dateStr);
+      return d >= s && d <= en;
+    });
+    // dedupe by key
+    const map = new Map();
+    rawEntries.forEach(e=>{
+      const k = entryKey(e);
+      if(!map.has(k)) map.set(k, e);
+    });
+    const entries = Array.from(map.values());
+    if(entries.length === 0){
+      const none = document.createElement('div'); none.className='muted small'; none.textContent = 'Tidak ada entri untuk tanggal ini.'; list.appendChild(none);
+    } else {
+      let totalLemburDate = 0, totalFieldDate = 0;
+      entries.forEach(e=>{
+        const row = document.createElement('div'); row.style.padding='8px'; row.style.borderBottom='1px dashed rgba(255,255,255,0.03)';
+        const dayIsWeekend = (new Date(dateStr).getDay() === 0 || new Date(dateStr).getDay() === 6) || (period.holidays && period.holidays[dateStr]);
+        const hourly = Math.round((Number(period.income.gaji)||0) / 173) || 0;
+        const hoursPerDay = (e.hours || 0) <= 24 ? (e.hours || 0) : ((e.hours || 0) / (e.days || 1));
+        let nominalForDate = 0;
+        if(e.type === 'tw' || dayIsWeekend){
+          for(let h=1; h<=hoursPerDay; h++){
+            if(h <= 8) nominalForDate += hourly * 2;
+            else if(h === 9) nominalForDate += hourly * 3;
+            else nominalForDate += hourly * 4;
+          }
+        } else {
+          const overtime = Math.max(0, hoursPerDay - 8);
+          for(let oh=1; oh<=overtime; oh++){
+            if(oh === 1) nominalForDate += hourly * 1.5;
+            else nominalForDate += hourly * 2;
+          }
+        }
+        const fieldForDate = FIELD_PER_DAY;
+        totalLemburDate += Math.round(nominalForDate);
+        totalFieldDate += fieldForDate;
+        row.innerHTML = `<div style="display:flex;justify-content:space-between"><div><strong>${e.desc || '(tanpa deskripsi)'}</strong><div class="small muted">${e.type.toUpperCase()} • ${hoursPerDay} jam/hari</div></div><div style="text-align:right"><div class="small muted">Lembur: Rp ${Math.round(nominalForDate).toLocaleString()}</div><div class="small muted">Field: Rp ${fieldForDate.toLocaleString()}</div><div style="font-weight:800;margin-top:6px">Total: Rp ${(Math.round(nominalForDate)+fieldForDate).toLocaleString()}</div></div></div>`;
+        list.appendChild(row);
+      });
+      const totalsDiv = document.createElement('div'); totalsDiv.style.marginTop='10px'; totalsDiv.style.paddingTop='8px'; totalsDiv.style.borderTop='1px dashed rgba(255,255,255,0.03)';
+      totalsDiv.innerHTML = `<div style="display:flex;justify-content:space-between"><div class="muted">Total Lembur (tanggal)</div><div>Rp ${totalLemburDate.toLocaleString()}</div></div><div style="display:flex;justify-content:space-between;margin-top:6px"><div class="muted">Total Field (tanggal)</div><div>Rp ${totalFieldDate.toLocaleString()}</div></div><div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:800"><div>Grand Total</div><div>Rp ${(totalLemburDate+totalFieldDate).toLocaleString()}</div></div>`;
+      list.appendChild(totalsDiv);
+    }
+    modal.appendChild(list);
+
+    // Holiday controls inside modal (checkbox + name)
+    const holidayRow = document.createElement('div'); holidayRow.style.marginTop='12px';
+    const isHoliday = Boolean(period.holidays && period.holidays[dateStr]);
+    holidayRow.innerHTML = `<div style="display:flex;gap:8px;align-items:center">
+      <input type="checkbox" id="modalHolidayCheck" ${isHoliday ? 'checked' : ''} />
+      <label for="modalHolidayCheck" class="small muted">Tandai sebagai hari libur</label>
+      <input id="modalHolidayName" type="text" placeholder="Nama libur (opsional)" style="flex:1;margin-left:8px" value="${isHoliday ? (period.holidays[dateStr]||'') : ''}" />
+    </div>`;
+    modal.appendChild(holidayRow);
+
+    const actionRow = document.createElement('div'); actionRow.style.display='flex'; actionRow.style.justifyContent='flex-end'; actionRow.style.gap='8px'; actionRow.style.marginTop='12px';
+    const saveHolidayBtn = document.createElement('button'); saveHolidayBtn.className='btn'; saveHolidayBtn.textContent='Simpan (Libur)';
+    const closeBtn = document.createElement('button'); closeBtn.className='btn ghost'; closeBtn.textContent='Tutup';
+    actionRow.appendChild(saveHolidayBtn); actionRow.appendChild(closeBtn);
+    modal.appendChild(actionRow);
+
+    saveHolidayBtn.addEventListener('click', ()=>{
+      const checked = document.getElementById('modalHolidayCheck').checked;
+      const name = document.getElementById('modalHolidayName').value.trim() || 'Libur';
+      const p = ensurePeriod(Number(state.selectedYear), Number(state.selectedMonth));
+      p.holidays = p.holidays || {};
+      if(checked){
+        p.holidays[dateStr] = name;
+      } else {
+        if(p.holidays && p.holidays[dateStr]) delete p.holidays[dateStr];
+      }
+      // after changing holiday, recompute all entries for this period and update UI
+      storageSave();
+      renderCalendar(Number(l.month.value), Number(l.year.value));
+      computeAndShow(p);
+      if(typeof updateUIForSelectedPeriod === 'function') updateUIForSelectedPeriod();
+      modalRoot.style.display='none'; modalRoot.innerHTML='';
+    });
+
+    closeBtn.addEventListener('click', ()=>{ modalRoot.style.display='none'; modalRoot.innerHTML=''; });
+
+    backdrop.appendChild(modal);
+    modalRoot.appendChild(backdrop);
+    modalRoot.style.display='block';
+  }
+
+  function renderCalendar(monthIndex, year){
+    l.grid.innerHTML = '';
+    const headers = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    headers.forEach(h=>{ const d=document.createElement('div'); d.className='cal-day header'; d.textContent=h; l.grid.appendChild(d); });
+    const first = new Date(year, monthIndex, 1);
+    const startDay = first.getDay();
+    for(let i=0;i<startDay;i++){ const d=document.createElement('div'); d.className='cal-day'; l.grid.appendChild(d); }
+    const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+    const period = ensurePeriod(year, monthIndex);
+    if(Object.keys(period.holidays || {}).length === 0){
+      period.holidays = period.holidays || {};
+      period.holidays[`${year}-01-01`] = 'Tahun Baru';
+      period.holidays[`${year}-08-17`] = 'HUT RI';
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      const dateStr = `${year}-${String(monthIndex+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const el = document.createElement('div'); el.className='cal-day'; el.dataset.date = dateStr;
+      const num = document.createElement('div'); num.className='date-num'; num.textContent = d;
+      const badges = document.createElement('div'); badges.className = 'badges';
+      el.appendChild(num); el.appendChild(badges);
+      if(period.holidays && period.holidays[dateStr]) {
+        el.classList.add('range-field');
+        const hb = document.createElement('div'); hb.className='badge field'; hb.textContent = period.holidays[dateStr]; badges.appendChild(hb);
+      }
+      el.addEventListener('click', ()=>{
+        showDateModal(dateStr);
+      });
+      l.grid.appendChild(el);
+    }
+    renderEntriesOnCalendar(period);
+  }
+
+  // wire events
+  function wire(){
+    l.month.addEventListener('change', ()=>{ renderCalendar(Number(l.month.value), Number(l.year.value)); });
+    l.year.addEventListener('change', ()=>{ renderCalendar(Number(l.month.value), Number(l.year.value)); });
+
+    l.prev.addEventListener('click', ()=>{
+      let m = Number(l.month.value), y = Number(l.year.value);
+      m--; if(m<0){ m=11; y--; } if(y<2026) y=2026;
+      l.month.value = m; l.year.value = y; renderCalendar(m,y);
+    });
+    l.next.addEventListener('click', ()=>{
+      let m = Number(l.month.value), y = Number(l.year.value);
+      m++; if(m>11){ m=0; y++; } if(y>2050) y=2050;
+      l.month.value = m; l.year.value = y; renderCalendar(m,y);
+    });
+
+    l.addBtn.addEventListener('click', ()=>{
+      const start = l.start.value, end = l.end.value;
+      const hours = Number(l.hours.value);
+      const type = l.type.value;
+      const desc = l.desc.value.trim();
+      if(!start || !end){ alert('Pilih rentang tanggal'); return; }
+      const days = daysBetweenInclusive(start,end);
+      if(days <= 0){ alert('Rentang tanggal tidak valid'); return; }
+      const p = ensurePeriod(state.selectedYear, state.selectedMonth);
+      p.overtimeEntries = p.overtimeEntries || [];
+      const entry = { start, end, days, hours: (hours || 0), type, desc, isField: true };
+      const added = addEntryIfNotDuplicate(p, entry);
+      if(!added){ alert('Entri sama sudah ada.'); return; }
+      storageSave();
+      renderEntriesOnCalendar(p);
+      l.start.value=''; l.end.value=''; l.hours.value=''; l.desc.value='';
+    });
+
+    l.clearBtn.addEventListener('click', ()=>{
+      if(!confirm('Hapus semua entri lembur untuk periode ini?')) return;
+      const p = ensurePeriod(state.selectedYear, state.selectedMonth);
+      p.overtimeEntries = [];
+      storageSave();
+      renderEntriesOnCalendar(p);
+      computeAndShow(p);
+    });
+
+    l.applyBtn.addEventListener('click', ()=>{
+      const p = ensurePeriod(state.selectedYear, state.selectedMonth);
+      const res = computeAndShow(p);
+      p.income.fieldAllowance = res.totalField;
+      p.income.lembur = res.totalOvertime;
+      p.income.travelNormal = res.totalTN;
+      p.income.travelWeekend = res.totalTW;
+      storageSave();
+      if(typeof window.setAutoIncomeForPeriod === 'function'){
+        window.setAutoIncomeForPeriod(res.totalField, res.totalOvertime, res.totalTN, res.totalTW, state.selectedYear, state.selectedMonth);
+      }
+      if(typeof updateUIForSelectedPeriod === 'function') updateUIForSelectedPeriod();
+      alert('Hasil lembur dan field diterapkan ke Summary untuk periode aktif.');
+    });
+
+    l.exportBtn.addEventListener('click', ()=>{
+      const p = ensurePeriod(state.selectedYear, state.selectedMonth);
+      const rows = [['Start','End','Days','Jenis','JamInput','JamPerHari','FieldPerEntry','Deskripsi','Nominal Lembur (Rp)','Nominal Field (Rp)','Total (Rp)']];
+      const res = computeAndShow(p);
+      (p.overtimeEntries || []).forEach(e=>{
+        rows.push([e.start, e.end, e.days || 1, e.type, e.hours || 0, e._hoursPerDay || 0, e._fieldNominal || 0, e.desc || '', e._nominal || 0, e._fieldNominal || 0, e._totalNominal || 0]);
+      });
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `lembur_${state.selectedYear}_${state.selectedMonth+1}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+  }
+
+  populateSelectors();
+  window.renderCalendarForCurrentPeriod = function(){ const m = Number(state.selectedMonth); const y = Number(state.selectedYear); renderCalendar(m, y); };
+  renderCalendar(Number(l.month.value), Number(l.year.value));
+  wire();
+
+})(); // end lemburTab
+
+/* Tab switching */
+const btnSummary = document.getElementById('btn-summary');
+const btnLembur = document.getElementById('btn-lembur');
+const summaryTab = document.getElementById('summaryTab');
+const lemburTab = document.getElementById('lemburTab');
+
+function setActiveNav(btn){ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); }
+
+btnSummary.addEventListener('click', function(){ summaryTab.style.display = 'block'; lemburTab.style.display = 'none'; setActiveNav(this); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+btnLembur.addEventListener('click', function(){ summaryTab.style.display = 'none'; lemburTab.style.display = 'block'; setActiveNav(this); });
+
+/* Init overall */
+(function init(){
+  storageLoad();
+  populateMonthYearSelectors();
+  bindEvents();
+  ensurePeriod(state.selectedYear, state.selectedMonth);
+  updateUIForSelectedPeriod();
+  summaryTab.style.display = 'block';
+  lemburTab.style.display = 'none';
+  setActiveNav(btnSummary);
+})();
+</script>
+</body>
+</html>
