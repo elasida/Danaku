@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#071226">
 <meta charset="utf-8" />
 <title>Money Management — Summary + Lembur (Final)</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
@@ -823,6 +825,11 @@ btnLembur.addEventListener('click', function(){ summaryTab.style.display = 'none
   lemburTab.style.display = 'none';
   setActiveNav(btnSummary);
 })();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{/* ignore */});
+  }
 </script>
 </body>
 </html>
